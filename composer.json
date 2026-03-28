@@ -1,0 +1,13 @@
+{
+    "name": "local/modx3profilertoolbar",
+    "description": "Modx3ProfilerToolbar — toolbar-профайлер для MODX",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Modx3ProfilerToolbar\\": "core/components/modx3profilertoolbar/src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {}
+    }
+}

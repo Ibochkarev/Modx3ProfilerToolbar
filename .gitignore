@@ -1,0 +1,21 @@
+# Build
+_build/build.config.php
+core/packages/*.transport.zip
+build/
+
+# Runtime cache (трейсы и т.п.)
+cache/
+
+# Composer
+vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

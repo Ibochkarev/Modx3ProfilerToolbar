@@ -1,0 +1,22 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+
+## [1.0.1-pl] - 2026-3-28
+
+### Fixed
+- Обёртки сниппетов/чанков: `SnippetProcessWrapper` / `ChunkProcessWrapper` наследуют `modSnippet` / `modChunk`, чтобы `$modx->runSnippet()` и `$modx->getChunk()` проходили `instanceof` в ядре MODX 3 (раньше возвращалась пустая строка).
+
+## [1.0.0-pl] - 2026-02-24
+
+### Added
+- Modx3ProfilerToolbar: Frontend Dev Toolbar for MODX 3
+- Frontend Dev Toolbar (Vue Petite): Overview, Slow Components, Timeline, SQL
+- Advisor rules: UncachedSnippet, N1, SlowQuery, ChunkOveruse, TooManySnippets
+- Localization: ru, en, uk
+
+### Notes
+- No Manager UI, no trace storage, no debug report (toolbar-only addon)

@@ -1,0 +1,192 @@
+---
+description: Правила рефакторинга существующего кода mProfiler3 (применяется ТОЛЬКО при рефакторинге)
+globs: "**/src/**","**/core/components/modxprofiler3/**","**/plugin/**"
+alwaysApply: true
+---
+
+# Cursor Ruleset — Рефакторинг mProfiler3
+
+Этот ruleset применяется **ТОЛЬКО при рефакторинге существующего кода**.
+
+---
+
+## Основные принципы
+
+1. ❌ Не менять публичные API без причины
+2. ❌ Не ломать обратную совместимость
+3. ❌ Не добавлять новую функциональность
+4. ✅ Улучшать читаемость, тестируемость, производительность
+
+---
+
+## Архитектурные правила
+
+- Plugin → только orchestration
+- Вся логика → Services
+- Каждый profiler — отдельный класс
+- Никаких static singleton'ов
+
+---
+
+## Performance rules
+
+- Любое добавление логики → проверить overhead
+- Запрещены:
+  - `sleep`
+  - `usleep`
+  - `var_dump`
+  - `die` / `exit`
+
+---
+
+## Безопасность
+
+- Не логировать:
+  - POST
+  - cookies
+  - headers
+- SQL параметры — маскировать
+
+---
+
+## Рефакторинг разрешён только если
+
+- код стал короче ИЛИ
+- cyclomatic complexity уменьшилась ИЛИ
+- тесты стали проще
+
+---
+
+## Перед применением рефакторинга
+
+Cursor ОБЯЗАН:
+
+1. Описать проблему
+2. Предложить 2 варианта
+3. Объяснить, почему выбран один
+
+---
+
+## После рефакторинга
+
+- Код должен пройти существующие тесты
+- Архитектура PRD соблюдена
+
+---
+
+## Примеры допустимого рефакторинга
+
+### ✅ Было
+```php
+if ($a) {
+    if ($b) {
+        if ($c) {
+            doSomething();
+        }
+    }
+}
+```
+
+### ✅ Стало
+```php
+if (!$a || !$b || !$c) {
+    return;
+}
+doSomething();
+```
+
+---
+
+### ✅ Было
+```php
+public function process()
+{
+    $data = $this->getData();
+    $filtered = $this->filterData($data);
+    $transformed = $this->transformData($filtered);
+    $validated = $this->validateData($transformed);
+    return $validated;
+}
+```
+
+### ✅ Стало
+```php
+public function process()
+{
+    return $this->validateData(
+        $this->transformData(
+            $this->filterData(
+                $this->getData()
+            )
+        )
+    );
+}
+```
+
+---
+
+## Примеры недопустимого рефакторинга
+
+### ❌ Изменение публичного API
+```php
+// Было
+public function getTime(): float
+
+// Стало (НЕЛЬЗЯ без причины!)
+public function getExecutionTime(): float
+```
+
+### ❌ Добавление новой функциональности
+```php
+// Было
+public function collect(): array
+
+// Стало (НЕЛЬЗЯ — это не рефакторинг!)
+public function collect(): array
+{
+    $data = parent::collect();
+    $data['new_feature'] = $this->newFeature(); // ❌
+    return $data;
+}
+```
+
+### ❌ Ломается обратная совместимость
+```php
+// Было
+public function format($data)
+
+// Стало (НЕЛЬЗЯ — изменён тип параметра!)
+public function format(array $data)
+```
+
+---
+
+## Тестирование после рефакторинга
+
+Обязательно:
+
+1. Запустить существующие unit-тесты
+2. Проверить integration-тесты (если есть)
+3. Убедиться, что overhead не вырос
+
+---
+
+## Метрики качества рефакторинга
+
+Рефакторинг считается успешным, если:
+
+- Cognitive Complexity ↓
+- Lines of Code ↓ или =
+- Test Coverage ↑ или =
+- Performance overhead ↓ или =
+- Cyclomatic Complexity ↓
+
+---
+
+## Когда НЕ делать рефакторинг
+
+- Код работает и понятен
+- Нет проблем с производительностью
+- Нет дублирования
+- Тесты покрывают функциональность
+- Изменения не дают измеримой пользы
