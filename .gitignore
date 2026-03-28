@@ -11,6 +11,7 @@ vendor/
 composer.lock
 
 # IDE
+.cursor/
 .idea/
 .vscode/
 *.swp
