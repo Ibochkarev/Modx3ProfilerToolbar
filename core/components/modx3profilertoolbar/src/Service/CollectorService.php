@@ -26,13 +26,14 @@ class CollectorService
     /**
      * Build full trace data for the request.
      *
-     * @param array $data start_time, end_time, start_memory, end_memory, events, collectors
+     * @param array $data start_time, end_time, ttfb, start_memory, end_memory, events, collectors
      * @return array Trace data ready for AnalyzerService and StorageService
      */
     public function collect(string $requestId, array $data): array
     {
         $startTime = $data['start_time'];
         $endTime = $data['end_time'];
+        $ttfb = (float) ($data['ttfb'] ?? 0.0);
         $startMemory = (int) ($data['start_memory'] ?? 0);
         $endMemory = (int) ($data['end_memory'] ?? 0);
         $events = $data['events'] ?? [];
@@ -107,7 +108,7 @@ class CollectorService
             'user_id' => $this->modx->user ? (int) $this->modx->user->id : 0,
             'metrics' => [
                 'total_time' => $totalTime,
-                'ttfb' => $totalTime,
+                'ttfb' => $ttfb,
                 'php_time' => $phpTime,
                 'sql_time' => $sqlTime,
                 'memory_peak' => max($endMemory, memory_get_peak_usage(true)),

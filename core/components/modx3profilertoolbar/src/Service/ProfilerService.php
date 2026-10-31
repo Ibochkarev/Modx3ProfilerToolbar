@@ -30,8 +30,8 @@ class ProfilerService
     /** @var float */
     protected $startTime;
 
-    /** @var float */
-    protected $ttfbTime;
+    /** @var float|null */
+    protected $ttfbTime = null;
 
     /** @var int */
     protected $startMemory;
@@ -145,7 +145,8 @@ class ProfilerService
         $endTime = microtime(true);
 
         // Calculate TTFB (time from profiler start to first tracked event / response preparation)
-        $ttfb = $this->ttfbTime - $this->startTime;
+        // Approximate TTFB as time from request start (REQUEST_TIME_FLOAT) to profiler start
+        $ttfb = $this->startTime - ($_SERVER['REQUEST_TIME_FLOAT'] ?? $this->startTime);
 
         // 1) Завершённые вызовы: из $parser->tags (pdoTools пишет туда при втором вызове debugParser)
         if ($this->modx->parser instanceof \debugPdoParser && !empty($this->modx->parser->tags)) {
