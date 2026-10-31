@@ -76,9 +76,9 @@ class PDOProfiler
 
     /**
      * Intercept prepare() calls.
-     * @return PDOStatementProfiler|false
+     * Returns PDOStatementProfiler wrapper (compatible with xPDO).
      */
-    public function prepare(string $query, array $options = []): PDOStatement|false
+    public function prepare(string $query, array $options = []): mixed
     {
         if (!$this->isProfiling) {
             return $this->originalPdo->prepare($query, $options);
