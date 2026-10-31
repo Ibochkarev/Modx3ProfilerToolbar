@@ -46,9 +46,10 @@ switch ($eventName) {
     case 'OnHandleRequest':
         if (!empty($modx->modx3profilertoolbar)) {
             $modx->modx3profilertoolbar->trackEvent('OnHandleRequest', 'start');
+            // Close the OnMODXInit event here to get a proper duration
+            $modx->modx3profilertoolbar->trackEvent('OnMODXInit', 'end');
         }
         break;
-
     case 'OnLoadWebDocument':
         if (!empty($modx->modx3profilertoolbar)) {
             $modx->modx3profilertoolbar->trackEvent('OnHandleRequest', 'end');
@@ -60,6 +61,7 @@ switch ($eventName) {
         if (!empty($modx->modx3profilertoolbar)) {
             $modx->modx3profilertoolbar->trackEvent('OnLoadWebDocument', 'end');
             $modx->modx3profilertoolbar->trackEvent('OnWebPagePrerender', 'start');
+            $modx->modx3profilertoolbar->trackEvent('OnWebPagePrerender', 'end');
             $modx->modx3profilertoolbar->stop();
         }
         break;
