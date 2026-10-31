@@ -181,6 +181,13 @@ class ToolbarService
             'yes' => $this->modx->lexicon('yes'),
             'no' => $this->modx->lexicon('no'),
             'possible_n1' => $this->modx->lexicon('mpr_possible_n1'),
+            // Added for new UI elements (Issue #3)
+            'advisor' => $this->modx->lexicon('mpr_advisor'),
+            'performance_score' => $this->modx->lexicon('mpr_performance_score'),
+            'status_excellent' => $this->modx->lexicon('mpr_status_excellent'),
+            'status_fair' => $this->modx->lexicon('mpr_status_fair'),
+            'status_critical' => $this->modx->lexicon('mpr_status_critical'),
+            'no_data' => $this->modx->lexicon('mpr_no_data', 'Нет данных'),
         ];
     }
 }
