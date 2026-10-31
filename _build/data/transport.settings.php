@@ -43,4 +43,25 @@ return [
         'name' => 'setting_modx3profilertoolbar.cli_enabled',
         'description' => 'setting_modx3profilertoolbar.cli_enabled_desc',
     ],
+    'cli_output' => [
+        'value' => 'console',
+        'xtype' => 'modx-combo-list',
+        'area' => 'cli',
+        'name' => 'setting_modx3profilertoolbar.cli_output',
+        'description' => 'setting_modx3profilertoolbar.cli_output_desc',
+    ],
+    'cli_output_file' => [
+        'value' => '{core_path}components/modx3profilertoolbar/logs/cli-trace.log',
+        'xtype' => 'textfield',
+        'area' => 'cli',
+        'name' => 'setting_modx3profilertoolbar.cli_output_file',
+        'description' => 'setting_modx3profilertoolbar.cli_output_file_desc',
+    ],
+    'cli_output_format' => [
+        'value' => 'json',
+        'xtype' => 'modx-combo-list',
+        'area' => 'cli',
+        'name' => 'setting_modx3profilertoolbar.cli_output_format',
+        'description' => 'setting_modx3profilertoolbar.cli_output_format_desc',
+    ],
 ];

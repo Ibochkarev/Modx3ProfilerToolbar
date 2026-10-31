@@ -151,6 +151,12 @@ $_lang['setting_modx3profilertoolbar.slow_snippet_ms'] = 'Поріг повіл�
 $_lang['setting_modx3profilertoolbar.slow_snippet_ms_desc'] = 'Снипети повільніші за це позначаються.';
 $_lang['setting_modx3profilertoolbar.cli_enabled'] = 'Профілювати CLI';
 $_lang['setting_modx3profilertoolbar.cli_enabled_desc'] = 'Профілювати CLI-запити.';
+$_lang['setting_modx3profilertoolbar.cli_output'] = 'Вивід у CLI';
+$_lang['setting_modx3profilertoolbar.cli_output_desc'] = 'Куди виводити результати профілювання у CLI: console (у stdout) або file (у файл).';
+$_lang['setting_modx3profilertoolbar.cli_output_file'] = 'Файл для CLI-трейсів';
+$_lang['setting_modx3profilertoolbar.cli_output_file_desc'] = 'Шлях до файлу для збереження трейсів у режимі CLI. Використовується тільки якщо cli_output = file.';
+$_lang['setting_modx3profilertoolbar.cli_output_format'] = 'Формат виводу CLI';
+$_lang['setting_modx3profilertoolbar.cli_output_format_desc'] = 'Формат виводу результатів профілювання у CLI: json, text або csv.';
 $_lang['setting_modx3profilertoolbar.storage_path'] = 'Шлях до трейсів';
 $_lang['setting_modx3profilertoolbar.storage_path_desc'] = 'Каталог для raw-файлів трейсів. Порожньо = core/cache/modx3profilertoolbar/traces/';
 
