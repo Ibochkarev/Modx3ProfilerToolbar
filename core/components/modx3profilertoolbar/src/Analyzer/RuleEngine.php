@@ -35,6 +35,9 @@ class RuleEngine
      */
     public function analyze(array $traceData): array
     {
+        // Ensure lexicon is loaded
+        $this->modx->lexicon->load('modx3profilertoolbar:default');
+        
         $recommendations = [];
         foreach ($this->rules as $rule) {
             $result = $rule->evaluate($traceData);
