@@ -47,35 +47,38 @@ class PDOStatementProfiler
         }
 
         $startTime = microtime(true);
+        $result = false;
+        $thrownException = null;
+
         try {
-            // Update bound params from references
+            // Update bound params from references before execution
             foreach ($this->boundParamRefs as $key => &$ref) {
                 $this->boundParams[$key] = $ref;
             }
 
-            // Execute with provided params or bound params
-            $result = $this->statement->execute($params ?? $this->boundParams);
-            $time = microtime(true) - $startTime;
-
-            // Merge params: explicit execute() params take precedence
-            $finalParams = $params ?? $this->boundParams;
-            if ($params !== null && !empty($this->boundParams)) {
-                // Merge but preserve explicit params
-                $finalParams = $params + $this->boundParams;
+            // If params were bound via bindParam/bindValue, execute without params
+            // Otherwise use provided params
+            if (!empty($this->boundParams)) {
+                $result = $this->statement->execute();
+            } else {
+                $result = $this->statement->execute($params);
             }
-
-            $this->interceptor->interceptQuery($this->query, $finalParams, $time);
-
-            return $result;
         } catch (\Throwable $e) {
-            $time = microtime(true) - $startTime;
-            $finalParams = $params ?? $this->boundParams;
-            if ($params !== null && !empty($this->boundParams)) {
-                $finalParams = $params + $this->boundParams;
-            }
-            $this->interceptor->interceptQuery($this->query, $finalParams, $time);
-            throw $e;
+            $thrownException = $e;
         }
+
+        $time = microtime(true) - $startTime;
+
+        // Use explicit params or bound params for logging
+        $finalParams = $params ?? $this->boundParams;
+
+        $this->interceptor->interceptQuery($this->query, $finalParams, $time);
+
+        if ($thrownException !== null) {
+            throw $thrownException;
+        }
+
+        return $result;
     }
 
     /**
@@ -101,7 +104,7 @@ class PDOStatementProfiler
     /**
      * Delegate other PDOStatement methods to the original statement.
      */
-    public function __call($name, $arguments)
+    public function __call(string $name, array $arguments): mixed
     {
         return $this->statement->$name(...$arguments);
     }
@@ -109,7 +112,7 @@ class PDOStatementProfiler
     /**
      * Delegate __get to original PDOStatement.
      */
-    public function __get($name)
+    public function __get(string $name): mixed
     {
         return $this->statement->$name;
     }
