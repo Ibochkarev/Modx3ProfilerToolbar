@@ -140,7 +140,7 @@ function initToolbar(data) {
           <div v-if="activeTab === 'advisor'" class="mpr-tab-advisor">
             <div v-if="advisor.length === 0" class="mpr-advisor-empty">{{ lex.no_data || 'No recommendations' }}</div>
             <div v-for="(item, i) in advisor" :key="i" class="mpr-advisor-item">
-              <div class="mpr-advisor-message">{{ item.message || item }}</div>
+              <div class="mpr-advisor-message">{{ item.message }}</div>
               <div v-if="item.suggestion" class="mpr-advisor-suggestion">💡 {{ item.suggestion }}</div>
             </div>
           </div>
