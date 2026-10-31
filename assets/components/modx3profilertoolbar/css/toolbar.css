@@ -50,7 +50,7 @@
 }
 
 .mpr-toolbar__expanded {
-  width: 22rem;
+  width: 30rem;
   max-width: calc(100vw - 1rem);
   background: #1e293b;
   color: #e2e8f0;
