@@ -188,6 +188,19 @@ class ToolbarService
             'status_fair' => $this->modx->lexicon('mpr_status_fair'),
             'status_critical' => $this->modx->lexicon('mpr_status_critical'),
             'no_data' => $this->modx->lexicon('mpr_no_data'),
+            // Advisor messages
+            'advisor_uncached_snippet' => $this->modx->lexicon('mpr_advisor_uncached_snippet'),
+            'advisor_uncached_suggestion' => $this->modx->lexicon('mpr_advisor_uncached_suggestion'),
+            'advisor_n1_query' => $this->modx->lexicon('mpr_advisor_n1_query'),
+            'advisor_n1_suggestion' => $this->modx->lexicon('mpr_advisor_n1_suggestion'),
+            'advisor_slow_query' => $this->modx->lexicon('mpr_advisor_slow_query'),
+            'advisor_slow_query_suggestion' => $this->modx->lexicon('mpr_advisor_slow_query_suggestion'),
+            'advisor_chunk_overuse' => $this->modx->lexicon('mpr_advisor_chunk_overuse'),
+            'advisor_chunk_overuse_suggestion' => $this->modx->lexicon('mpr_advisor_chunk_overuse_suggestion'),
+            'advisor_too_many_snippets' => $this->modx->lexicon('mpr_advisor_too_many_snippets'),
+            'advisor_too_many_snippets_suggestion' => $this->modx->lexicon('mpr_advisor_too_many_snippets_suggestion'),
+            'advisor_too_many_snippets_info' => $this->modx->lexicon('mpr_advisor_too_many_snippets_info'),
+            'advisor_too_many_snippets_info_suggestion' => $this->modx->lexicon('mpr_advisor_too_many_snippets_info_suggestion'),
         ];
     }
 }
