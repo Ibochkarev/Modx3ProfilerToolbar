@@ -46,7 +46,8 @@ class RuleEngine
                 if (isset($result['message'])) {
                     $msgKey = $result['message'];
                     $msgParams = $result['message_params'] ?? [];
-                    $result['message'] = $this->modx->lexicon($msgKey, $msgParams);
+                    $msgText = $this->modx->lexicon($msgKey);
+                    $result['message'] = $msgParams ? vsprintf($msgText, $msgParams) : $msgText;
                 }
                 if (isset($result['suggestion'])) {
                     $sugKey = $result['suggestion'];
