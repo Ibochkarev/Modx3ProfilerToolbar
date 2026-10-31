@@ -19,6 +19,8 @@ function initToolbar(data) {
   const timeline = data.timeline || []
   const sqlQueries = data.sql || []
   const lex = data.lexicon || {}
+  const advisor = data.advisor || []
+  const performanceScore = data.performance_score ?? null
 
   const scope = {
     metrics,
@@ -27,10 +29,13 @@ function initToolbar(data) {
     timeline,
     sqlQueries,
     lex,
+    advisor,
+    performanceScore,
     expanded: false,
     activeTab: 'overview',
     tabs: [
       { id: 'overview', label: lex.overview || 'Overview' },
+      { id: 'advisor', label: lex.advisor || 'Advisor' },
       { id: 'slow', label: lex.slow_components || 'Slow Components' },
       { id: 'timeline', label: lex.timeline || 'Timeline' },
       { id: 'sql', label: lex.sql || 'SQL' },
@@ -47,6 +52,18 @@ function initToolbar(data) {
       if (ms < 200) return 'mpr-metric--fast'
       if (ms < 500) return 'mpr-metric--warning'
       return 'mpr-metric--slow'
+    },
+    getScoreClass(score) {
+      if (score == null) return ''
+      if (score >= 80) return 'mpr-score--excellent'
+      if (score >= 50) return 'mpr-score--fair'
+      return 'mpr-score--critical'
+    },
+    getScoreLabel(score) {
+      if (score == null) return lex.no_data || 'No data'
+      if (score >= 80) return lex.status_excellent || 'Excellent'
+      if (score >= 50) return lex.status_fair || 'Fair'
+      return lex.status_critical || 'Critical'
     },
     getBarStyle(event) {
       if (!this.timeline.length) return {}
@@ -91,6 +108,13 @@ function initToolbar(data) {
 
         <div class="mpr-toolbar__content">
           <div v-if="activeTab === 'overview'" class="mpr-tab-overview">
+            <div class="mpr-metric mpr-metric--score" v-if="performanceScore !== null">
+              <span class="mpr-metric__label">{{ lex.performance_score || 'Performance Score' }}:</span>
+              <span class="mpr-metric__value" :class="getScoreClass(performanceScore)">
+                <span class="mpr-metric__dot" :class="getScoreClass(performanceScore)"></span>
+                {{ performanceScore }} / 100 ({{ getScoreLabel(performanceScore) }})
+              </span>
+            </div>
             <div class="mpr-metric">
               <span class="mpr-metric__label">{{ lex.total_time || 'Total time' }}:</span>
               <span class="mpr-metric__value" :class="getTimeClass(metrics.total_time)"><span class="mpr-metric__dot" :class="getTimeClass(metrics.total_time)"></span>{{ metrics.total_time }} ms</span>
@@ -110,6 +134,14 @@ function initToolbar(data) {
             <div class="mpr-info-block">
               <div class="mpr-info-line">{{ lex.query_time || 'Query time' }}: {{ info.queryTime || '—' }}</div>
               <div class="mpr-info-line">{{ lex.source || 'Source' }}: {{ info.source || '—' }}</div>
+            </div>
+          </div>
+
+          <div v-if="activeTab === 'advisor'" class="mpr-tab-advisor">
+            <div v-if="advisor.length === 0" class="mpr-advisor-empty">{{ lex.no_data || 'No recommendations' }}</div>
+            <div v-for="(item, i) in advisor" :key="i" class="mpr-advisor-item">
+              <div class="mpr-advisor-message">{{ item.message || item }}</div>
+              <div v-if="item.suggestion" class="mpr-advisor-suggestion">💡 {{ item.suggestion }}</div>
             </div>
           </div>
 

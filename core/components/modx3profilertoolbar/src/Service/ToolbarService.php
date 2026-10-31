@@ -64,6 +64,9 @@ class ToolbarService
                 'queryTime' => round($queryTimeSec, 4) . ' s',
                 'source' => $source,
             ],
+            // Added advisor and performance score for UI
+            'advisor' => $traceData['advisor'] ?? [],
+            'performance_score' => $traceData['performance_score'] ?? null,
             'slow_components' => $this->getSlowComponents($traceData),
             'timeline' => $this->getTimelineData($traceData),
             'sql' => $this->getSQLData($traceData),
@@ -178,6 +181,26 @@ class ToolbarService
             'yes' => $this->modx->lexicon('yes'),
             'no' => $this->modx->lexicon('no'),
             'possible_n1' => $this->modx->lexicon('mpr_possible_n1'),
+            // Added for new UI elements (Issue #3)
+            'advisor' => $this->modx->lexicon('mpr_advisor'),
+            'performance_score' => $this->modx->lexicon('mpr_performance_score'),
+            'status_excellent' => $this->modx->lexicon('mpr_status_excellent'),
+            'status_fair' => $this->modx->lexicon('mpr_status_fair'),
+            'status_critical' => $this->modx->lexicon('mpr_status_critical'),
+            'no_data' => $this->modx->lexicon('mpr_no_data'),
+            // Advisor messages
+            'advisor_uncached_snippet' => $this->modx->lexicon('mpr_advisor_uncached_snippet'),
+            'advisor_uncached_suggestion' => $this->modx->lexicon('mpr_advisor_uncached_suggestion'),
+            'advisor_n1_query' => $this->modx->lexicon('mpr_advisor_n1_query'),
+            'advisor_n1_suggestion' => $this->modx->lexicon('mpr_advisor_n1_suggestion'),
+            'advisor_slow_query' => $this->modx->lexicon('mpr_advisor_slow_query'),
+            'advisor_slow_query_suggestion' => $this->modx->lexicon('mpr_advisor_slow_query_suggestion'),
+            'advisor_chunk_overuse' => $this->modx->lexicon('mpr_advisor_chunk_overuse'),
+            'advisor_chunk_overuse_suggestion' => $this->modx->lexicon('mpr_advisor_chunk_overuse_suggestion'),
+            'advisor_too_many_snippets' => $this->modx->lexicon('mpr_advisor_too_many_snippets'),
+            'advisor_too_many_snippets_suggestion' => $this->modx->lexicon('mpr_advisor_too_many_snippets_suggestion'),
+            'advisor_too_many_snippets_info' => $this->modx->lexicon('mpr_advisor_too_many_snippets_info'),
+            'advisor_too_many_snippets_info_suggestion' => $this->modx->lexicon('mpr_advisor_too_many_snippets_info_suggestion'),
         ];
     }
 }

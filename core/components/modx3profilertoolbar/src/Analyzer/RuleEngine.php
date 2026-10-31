@@ -35,10 +35,24 @@ class RuleEngine
      */
     public function analyze(array $traceData): array
     {
+        // Ensure lexicon is loaded
+        $this->modx->lexicon->load('modx3profilertoolbar:default');
+        
         $recommendations = [];
         foreach ($this->rules as $rule) {
             $result = $rule->evaluate($traceData);
             if ($result !== null) {
+                // Translate message and suggestion using lexicon
+                if (isset($result['message'])) {
+                    $msgKey = $result['message'];
+                    $msgParams = $result['message_params'] ?? [];
+                    $msgText = $this->modx->lexicon($msgKey);
+                    $result['message'] = $msgParams ? vsprintf($msgText, $msgParams) : $msgText;
+                }
+                if (isset($result['suggestion'])) {
+                    $sugKey = $result['suggestion'];
+                    $result['suggestion'] = $this->modx->lexicon($sugKey);
+                }
                 $recommendations[] = $result;
             }
         }
