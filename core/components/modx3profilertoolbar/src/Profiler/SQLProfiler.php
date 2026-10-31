@@ -18,6 +18,12 @@ class SQLProfiler
     /** @var array */
     protected $queries = [];
 
+    /** @var PDOProfiler|null */
+    protected $pdoProfiler = null;
+
+    /** @var PDOInterceptor|null */
+    protected $interceptor = null;
+
     public function __construct(\modX $modx, \Modx3ProfilerToolbar\Service\ProfilerService $profiler)
     {
         $this->modx = $modx;
@@ -34,6 +40,38 @@ class SQLProfiler
             'queries' => $this->modx->executedQueries ?? 0,
             'time' => $this->modx->queryTime ?? 0,
         ];
+
+        // Try to wrap PDO for query interception
+        $this->wrapPdo();
+    }
+
+    /**
+     * Wrap xPDO's PDO connection with our profiler.
+     */
+    protected function wrapPdo(): void
+    {
+        try {
+            $connection = $this->modx->getConnection();
+            if (!$connection || !isset($connection->pdo) || !$connection->pdo instanceof \PDO) {
+                return;
+            }
+
+            $originalPdo = $connection->pdo;
+            
+            // Create interceptor and profiler
+            $this->interceptor = new PDOInterceptor($this->modx, $this);
+            $this->pdoProfiler = new PDOProfiler($originalPdo, $this, $this->interceptor);
+            
+            // Replace PDO in connection
+            $connection->pdo = $this->pdoProfiler;
+            
+            // Start profiling
+            $this->pdoProfiler->startProfiling();
+            
+        } catch (\Throwable $e) {
+            // Fallback: PDO wrapping failed, rely on queryLog
+            $this->modx->log(\modX::LOG_LEVEL_WARN, '[Modx3ProfilerToolbar] PDO wrapping failed: ' . $e->getMessage());
+        }
     }
 
     public function logQuery(string $sql, array $params, float $time, array $options = []): void
@@ -55,13 +93,18 @@ class SQLProfiler
 
     public function getQueries(): array
     {
-        // Получаем реальные запросы из xPDO queryLog
+        // Return intercepted queries from PDO wrapper
+        if (!empty($this->queries)) {
+            return $this->queries;
+        }
+        
+        // Fallback: try xPDO queryLog (older MODX versions)
         if (!empty($this->modx->queryLog)) {
             foreach ($this->modx->queryLog as $entry) {
                 $sql = $entry['sql'] ?? '';
                 $time = (float) ($entry['time'] ?? 0);
                 
-                // Пропускаем дубликаты (если уже залогированы вручную)
+                // Skip duplicates
                 $alreadyLogged = false;
                 foreach ($this->queries as $existing) {
                     if (($existing['query'] ?? '') === $sql) {
@@ -77,28 +120,35 @@ class SQLProfiler
                         'time' => $time,
                         'count' => 1,
                         'source' => 'xPDO queryLog',
+                        'is_n1' => false,
+                        'is_slow' => false,
+                        'warnings' => [],
                     ];
                 }
             }
         }
         
-        // Fallback: если queryLog пустой, используем агрегат
-        $baseline = $this->modx->modx3profilertoolbar_sql_baseline ?? ['queries' => 0, 'time' => 0];
-        $currentQueries = $this->modx->executedQueries ?? 0;
-        $currentTime = $this->modx->queryTime ?? 0;
-        
-        $diffQueries = $currentQueries - $baseline['queries'];
-        $diffTime = $currentTime - $baseline['time'];
-        
-        // Если queryLog дал запросы, не добавляем агрегат
-        if ($diffQueries > 0 && empty($this->modx->queryLog)) {
-            $this->queries[] = [
-                'query' => sprintf('%d SQL queries', $diffQueries),
-                'query_text' => sprintf('%d SQL queries executed', $diffQueries),
-                'time' => $diffTime,
-                'count' => $diffQueries,
-                'source' => 'xPDO aggregate',
-            ];
+        // Last resort: aggregate from executedQueries/queryTime
+        if (empty($this->queries)) {
+            $baseline = $this->modx->modx3profilertoolbar_sql_baseline ?? ['queries' => 0, 'time' => 0];
+            $currentQueries = $this->modx->executedQueries ?? 0;
+            $currentTime = $this->modx->queryTime ?? 0;
+            
+            $diffQueries = $currentQueries - $baseline['queries'];
+            $diffTime = $currentTime - $baseline['time'];
+            
+            if ($diffQueries > 0) {
+                $this->queries[] = [
+                    'query' => sprintf('%d SQL queries executed', $diffQueries),
+                    'query_text' => sprintf('%d SQL queries', $diffQueries),
+                    'time' => $diffTime,
+                    'count' => $diffQueries,
+                    'source' => 'xPDO aggregate',
+                    'is_n1' => false,
+                    'is_slow' => false,
+                    'warnings' => [],
+                ];
+            }
         }
         
         return $this->queries;
