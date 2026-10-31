@@ -30,6 +30,9 @@ class ProfilerService
     /** @var float */
     protected $startTime;
 
+    /** @var float */
+    protected $ttfbTime;
+
     /** @var int */
     protected $startMemory;
 
@@ -81,6 +84,7 @@ class ProfilerService
         }
         $this->requestId = $this->generateRequestId();
         $this->startTime = microtime(true);
+        $this->ttfbTime = $this->startTime; // TTFB: time to first byte (approximated as profiler start)
         $this->startMemory = memory_get_usage(true);
         $this->registerProfilers();
         $this->trackEvent('OnMODXInit', 'start');
@@ -140,6 +144,9 @@ class ProfilerService
 
         $endTime = microtime(true);
 
+        // Calculate TTFB (time from profiler start to first tracked event / response preparation)
+        $ttfb = $this->ttfbTime - $this->startTime;
+
         // 1) Завершённые вызовы: из $parser->tags (pdoTools пишет туда при втором вызове debugParser)
         if ($this->modx->parser instanceof \debugPdoParser && !empty($this->modx->parser->tags)) {
             foreach ($this->modx->parser->tags as $hash => $tagData) {
@@ -163,6 +170,7 @@ class ProfilerService
         $traceData = $collectorService->collect($this->requestId, [
             'start_time' => $this->startTime,
             'end_time' => $endTime,
+            'ttfb' => $ttfb,
             'start_memory' => $this->startMemory,
             'end_memory' => $endMemory,
             'events' => $this->events,
