@@ -64,6 +64,9 @@ class ToolbarService
                 'queryTime' => round($queryTimeSec, 4) . ' s',
                 'source' => $source,
             ],
+            // Added advisor and performance score for UI
+            'advisor' => $traceData['advisor'] ?? [],
+            'performance_score' => $traceData['performance_score'] ?? null,
             'slow_components' => $this->getSlowComponents($traceData),
             'timeline' => $this->getTimelineData($traceData),
             'sql' => $this->getSQLData($traceData),

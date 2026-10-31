@@ -187,6 +187,79 @@
   color: #f87171;
 }
 
+/* Performance Score Styles */
+.mpr-metric--score {
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.mpr-score--excellent {
+  color: #86efac;
+}
+
+.mpr-score--fair {
+  color: #fde047;
+}
+
+.mpr-score--critical {
+  color: #f87171;
+}
+
+.mpr-metric--score .mpr-metric__dot {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+.mpr-metric--score .mpr-metric__dot.mpr-score--excellent {
+  background: #22c55e;
+  box-shadow: 0 0 0.5rem rgba(34, 197, 94, 0.5);
+}
+
+.mpr-metric--score .mpr-metric__dot.mpr-score--fair {
+  background: #eab308;
+  box-shadow: 0 0 0.5rem rgba(234, 179, 8, 0.5);
+}
+
+.mpr-metric--score .mpr-metric__dot.mpr-score--critical {
+  background: #ef4444;
+  box-shadow: 0 0 0.5rem rgba(239, 68, 68, 0.5);
+}
+
+/* Advisor Tab Styles */
+.mpr-tab-advisor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mpr-advisor-empty {
+  color: #94a3b8;
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}
+
+.mpr-advisor-item {
+  padding: 0.75rem;
+  background: #334155;
+  border-radius: 0.25rem;
+  border-left: 0.25rem solid #475569;
+}
+
+.mpr-advisor-message {
+  font-size: 0.875rem;
+  color: #e2e8f0;
+  margin-bottom: 0.25rem;
+}
+
+.mpr-advisor-suggestion {
+  font-size: 0.8125rem;
+  color: #7dd3fc;
+  padding-left: 0.25rem;
+}
+
 .mpr-tab-slow,
 .mpr-tab-timeline,
 .mpr-tab-sql {
