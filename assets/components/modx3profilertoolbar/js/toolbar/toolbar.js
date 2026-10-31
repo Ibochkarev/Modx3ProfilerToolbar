@@ -147,7 +147,11 @@ function initToolbar(data) {
 
           <div v-if="activeTab === 'slow'" class="mpr-tab-slow">
             <div v-for="(comp, i) in slowComponents" :key="i" class="mpr-component mpr-component--clickable">
-              <div class="mpr-component__line">{{ comp.type }}: {{ comp.name }} — {{ comp.calls != null ? comp.calls + ' ' + (lex.calls || 'calls') : comp.time + ' ms' + (comp.cached !== undefined && comp.cached !== null ? ' (' + (lex.cached || 'cached') + ': ' + (comp.cached ? (lex.yes || 'yes') : (lex.no || 'no')) + ')' : '') }}</div>
+              <div class="mpr-component__line">
+                {{ comp.type }}: {{ comp.name }} — {{ comp.time }} ms
+                <span v-if="comp.calls != null">({{ comp.calls }} {{ lex.calls || 'calls' }})</span>
+                <span v-if="comp.cached !== undefined && comp.cached !== null"> — {{ lex.cached || 'cached' }}: {{ comp.cached ? (lex.yes || 'yes') : (lex.no || 'no') }}</span>
+              </div>
             </div>
           </div>
 
