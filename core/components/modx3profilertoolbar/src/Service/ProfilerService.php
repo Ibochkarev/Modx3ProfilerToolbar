@@ -144,6 +144,17 @@ class ProfilerService
 
         $endTime = microtime(true);
 
+        // Close any open events to ensure they have proper duration
+        foreach ($this->events as $key => $event) {
+            if (!isset($event['end']) && isset($event['start'])) {
+                // Event was started but never ended - close it now
+                $this->events[$key]['end'] = $endTime;
+                $this->events[$key]['end_memory'] = memory_get_usage(true);
+                $this->events[$key]['duration'] = $endTime - $event['start'];
+                $this->events[$key]['memory_delta'] = $this->events[$key]['end_memory'] - $event['start_memory'];
+            }
+        }
+
         // Calculate TTFB (time from profiler start to first tracked event / response preparation)
         // Approximate TTFB as time from request start (REQUEST_TIME_FLOAT) to profiler start
         $ttfb = $this->startTime - ($_SERVER['REQUEST_TIME_FLOAT'] ?? $this->startTime);
