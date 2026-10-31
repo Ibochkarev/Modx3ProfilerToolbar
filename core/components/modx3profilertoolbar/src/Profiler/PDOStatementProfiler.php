@@ -52,19 +52,27 @@ class PDOStatementProfiler
             foreach ($this->boundParamRefs as $key => &$ref) {
                 $this->boundParams[$key] = $ref;
             }
-            
+
+            // Execute with provided params or bound params
             $result = $this->statement->execute($params ?? $this->boundParams);
             $time = microtime(true) - $startTime;
-            
-            // Merge bound params with execute params
-            $finalParams = array_merge($this->boundParams, $params ?? []);
-            
+
+            // Merge params: explicit execute() params take precedence
+            $finalParams = $params ?? $this->boundParams;
+            if ($params !== null && !empty($this->boundParams)) {
+                // Merge but preserve explicit params
+                $finalParams = $params + $this->boundParams;
+            }
+
             $this->interceptor->interceptQuery($this->query, $finalParams, $time);
-            
+
             return $result;
         } catch (\Throwable $e) {
             $time = microtime(true) - $startTime;
-            $finalParams = array_merge($this->boundParams, $params ?? []);
+            $finalParams = $params ?? $this->boundParams;
+            if ($params !== null && !empty($this->boundParams)) {
+                $finalParams = $params + $this->boundParams;
+            }
             $this->interceptor->interceptQuery($this->query, $finalParams, $time);
             throw $e;
         }

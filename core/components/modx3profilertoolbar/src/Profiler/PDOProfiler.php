@@ -53,20 +53,25 @@ class PDOProfiler
         }
 
         $startTime = microtime(true);
+        $statement = false;
+        $thrownException = null;
+
         try {
             $statement = $this->originalPdo->query($query, $fetchMode, ...$fetchModeArgs);
-            $time = microtime(true) - $startTime;
-            
-            if ($statement !== false) {
-                $this->interceptor->interceptQuery($query, [], $time);
-            }
-            
-            return $statement;
         } catch (\Throwable $e) {
-            $time = microtime(true) - $startTime;
-            $this->interceptor->interceptQuery($query, [], $time);
-            throw $e;
+            $thrownException = $e;
         }
+
+        $time = microtime(true) - $startTime;
+        
+        // Always log the query, even if it failed
+        $this->interceptor->interceptQuery($query, [], $time);
+
+        if ($thrownException !== null) {
+            throw $thrownException;
+        }
+
+        return $statement;
     }
 
     /**
@@ -98,22 +103,29 @@ class PDOProfiler
         }
 
         $startTime = microtime(true);
+        $result = false;
+        $thrownException = null;
+
         try {
             $result = $this->originalPdo->exec($query);
-            $time = microtime(true) - $startTime;
-            $this->interceptor->interceptQuery($query, [], $time);
-            return $result;
         } catch (\Throwable $e) {
-            $time = microtime(true) - $startTime;
-            $this->interceptor->interceptQuery($query, [], $time);
-            throw $e;
+            $thrownException = $e;
         }
+
+        $time = microtime(true) - $startTime;
+        $this->interceptor->interceptQuery($query, [], $time);
+
+        if ($thrownException !== null) {
+            throw $thrownException;
+        }
+
+        return $result;
     }
 
     /**
      * Delegate other PDO methods to the original PDO.
      */
-    public function __call($name, $arguments): mixed
+    public function __call(string $name, array $arguments): mixed
     {
         return $this->originalPdo->$name(...$arguments);
     }
@@ -121,7 +133,7 @@ class PDOProfiler
     /**
      * Delegate __get to original PDO.
      */
-    public function __get($name): mixed
+    public function __get(string $name): mixed
     {
         return $this->originalPdo->$name;
     }

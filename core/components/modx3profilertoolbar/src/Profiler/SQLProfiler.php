@@ -164,6 +164,17 @@ class SQLProfiler
         return $this->queries;
     }
 
+    /**
+     * Reset all tracked data (call between requests in long-running scripts).
+     */
+    public function reset(): void
+    {
+        $this->queries = [];
+        if ($this->interceptor) {
+            $this->interceptor->reset();
+        }
+    }
+
     protected function detectSource(): string
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 12);

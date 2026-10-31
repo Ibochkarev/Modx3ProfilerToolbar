@@ -185,6 +185,11 @@ class ProfilerService
             $toolbarService = new ToolbarService($this->modx, $this);
             $toolbarService->inject($this->requestId, $traceData);
         }
+
+        // Reset profilers for long-running scripts (CLI, workers)
+        if (php_sapi_name() === 'cli' && isset($this->collectors['sql'])) {
+            $this->collectors['sql']->reset();
+        }
     }
 
     /**
