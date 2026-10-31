@@ -187,7 +187,7 @@ class ToolbarService
             'status_excellent' => $this->modx->lexicon('mpr_status_excellent'),
             'status_fair' => $this->modx->lexicon('mpr_status_fair'),
             'status_critical' => $this->modx->lexicon('mpr_status_critical'),
-            'no_data' => $this->modx->lexicon('mpr_no_data', 'Нет данных'),
+            'no_data' => $this->modx->lexicon('mpr_no_data'),
         ];
     }
 }
