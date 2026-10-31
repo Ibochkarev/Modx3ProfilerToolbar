@@ -26,6 +26,9 @@ class PDOStatementProfiler
     /** @var array */
     protected $boundParams = [];
 
+    /** @var array References for bindParam */
+    protected $boundParamRefs = [];
+
     public function __construct(PDOStatement $statement, string $query, PDOInterceptor $interceptor, bool $isProfiling)
     {
         $this->statement = $statement;
@@ -37,7 +40,7 @@ class PDOStatementProfiler
     /**
      * Intercept execute() calls.
      */
-    public function execute($params = null): bool
+    public function execute(?array $params = null): bool
     {
         if (!$this->isProfiling) {
             return $this->statement->execute($params);
@@ -45,6 +48,11 @@ class PDOStatementProfiler
 
         $startTime = microtime(true);
         try {
+            // Update bound params from references
+            foreach ($this->boundParamRefs as $key => &$ref) {
+                $this->boundParams[$key] = $ref;
+            }
+            
             $result = $this->statement->execute($params ?? $this->boundParams);
             $time = microtime(true) - $startTime;
             
@@ -65,18 +73,20 @@ class PDOStatementProfiler
     /**
      * Intercept bindValue() to capture parameters.
      */
-    public function bindValue($param, $value, $type = \PDO::PARAM_NULL): bool
+    public function bindValue(int|string $param, mixed $value, int $type = \PDO::PARAM_NULL): bool
     {
         $this->boundParams[$param] = $value;
         return $this->statement->bindValue($param, $value, $type);
     }
 
     /**
-     * Intercept bindParam() to capture parameters.
+     * Intercept bindParam() to capture parameter references.
      */
-    public function bindParam($param, &$value, $type = \PDO::PARAM_NULL, $maxLength = null): bool
+    public function bindParam(int|string $param, mixed &$value, int $type = \PDO::PARAM_NULL, ?int $maxLength = null): bool
     {
-        $this->boundParams[$param] = $value;
+        // Store reference for later retrieval
+        $this->boundParamRefs[$param] = &$value;
+        $this->boundParams[$param] = $value; // Initial value
         return $this->statement->bindParam($param, $value, $type, $maxLength ?? 0);
     }
 

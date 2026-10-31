@@ -100,9 +100,8 @@ class PdoInterceptor
 
     /**
      * Detect N+1 query pattern.
-     * A query is considered N+1 if:
-     * - Same pattern executed more than 3 times
-     * - Total execution time > threshold
+     * A query is considered N+1 if the same pattern has been executed more than the threshold.
+     * Note: We check count-1 because we already incremented the counter for this execution.
      */
     protected function isN1Query(string $normalizedQuery): bool
     {
@@ -113,9 +112,10 @@ class PdoInterceptor
         $pattern = $this->queryPatterns[$normalizedQuery];
         
         // N+1 detection: same query executed many times in one request
+        // Check if count-1 >= threshold (this execution already counted)
         $threshold = (int) $this->modx->getOption('modx3profilertoolbar.n1_threshold', null, 5);
         
-        return $pattern['count'] >= $threshold;
+        return ($pattern['count'] - 1) >= $threshold;
     }
 
     /**

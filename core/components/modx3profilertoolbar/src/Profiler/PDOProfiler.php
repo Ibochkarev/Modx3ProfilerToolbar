@@ -1,6 +1,7 @@
 <?php
 /**
  * PDO wrapper for SQL query interception and N+1 detection.
+ * Uses composition instead of inheritance to avoid PDO constructor issues.
  *
  * @package modx3profilertoolbar
  */
@@ -10,7 +11,7 @@ namespace Modx3ProfilerToolbar\Profiler;
 use PDO;
 use PDOStatement;
 
-class PDOProfiler extends PDO
+class PDOProfiler
 {
     /** @var PDO */
     protected $originalPdo;
@@ -26,7 +27,6 @@ class PDOProfiler extends PDO
 
     public function __construct(PDO $pdo, SQLProfiler $sqlProfiler, PDOInterceptor $interceptor)
     {
-        // Don't call parent::__construct — we delegate to the real PDO
         $this->originalPdo = $pdo;
         $this->sqlProfiler = $sqlProfiler;
         $this->interceptor = $interceptor;
@@ -44,18 +44,23 @@ class PDOProfiler extends PDO
 
     /**
      * Intercept query() calls.
+     * @return PDOStatement|false
      */
-    public function query($query, $args = []): false|PDOStatement
+    public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
     {
         if (!$this->isProfiling) {
-            return $this->originalPdo->query($query, $args);
+            return $this->originalPdo->query($query, $fetchMode, ...$fetchModeArgs);
         }
 
         $startTime = microtime(true);
         try {
-            $statement = $this->originalPdo->query($query, $args);
+            $statement = $this->originalPdo->query($query, $fetchMode, ...$fetchModeArgs);
             $time = microtime(true) - $startTime;
-            $this->interceptor->interceptQuery($query, [], $time);
+            
+            if ($statement !== false) {
+                $this->interceptor->interceptQuery($query, [], $time);
+            }
+            
             return $statement;
         } catch (\Throwable $e) {
             $time = microtime(true) - $startTime;
@@ -66,19 +71,17 @@ class PDOProfiler extends PDO
 
     /**
      * Intercept prepare() calls.
+     * @return PDOStatementProfiler|false
      */
-    public function prepare($query, $args = []): false|PDOStatement
+    public function prepare(string $query, array $options = []): PDOStatement|false
     {
         if (!$this->isProfiling) {
-            return $this->originalPdo->prepare($query, $args);
+            return $this->originalPdo->prepare($query, $options);
         }
 
-        $startTime = microtime(true);
-        $statement = $this->originalPdo->prepare($query, $args);
-        $time = microtime(true) - $startTime;
-
-        // Log the prepare (execution happens via execute())
-        if ($statement) {
+        $statement = $this->originalPdo->prepare($query, $options);
+        
+        if ($statement !== false) {
             return new PDOStatementProfiler($statement, $query, $this->interceptor, $this->isProfiling);
         }
 
@@ -86,9 +89,31 @@ class PDOProfiler extends PDO
     }
 
     /**
+     * Delegate exec() calls.
+     */
+    public function exec(string $query): int|false
+    {
+        if (!$this->isProfiling) {
+            return $this->originalPdo->exec($query);
+        }
+
+        $startTime = microtime(true);
+        try {
+            $result = $this->originalPdo->exec($query);
+            $time = microtime(true) - $startTime;
+            $this->interceptor->interceptQuery($query, [], $time);
+            return $result;
+        } catch (\Throwable $e) {
+            $time = microtime(true) - $startTime;
+            $this->interceptor->interceptQuery($query, [], $time);
+            throw $e;
+        }
+    }
+
+    /**
      * Delegate other PDO methods to the original PDO.
      */
-    public function __call($name, $arguments)
+    public function __call($name, $arguments): mixed
     {
         return $this->originalPdo->$name(...$arguments);
     }
@@ -96,7 +121,7 @@ class PDOProfiler extends PDO
     /**
      * Delegate __get to original PDO.
      */
-    public function __get($name)
+    public function __get($name): mixed
     {
         return $this->originalPdo->$name;
     }

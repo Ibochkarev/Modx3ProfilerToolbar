@@ -47,12 +47,20 @@ class SQLProfiler
 
     /**
      * Wrap xPDO's PDO connection with our profiler.
+     * Only wraps if not already wrapped and if xPDO allows it.
      */
     protected function wrapPdo(): void
     {
         try {
             $connection = $this->modx->getConnection();
             if (!$connection || !isset($connection->pdo) || !$connection->pdo instanceof \PDO) {
+                $this->modx->log(\modX::LOG_LEVEL_DEBUG, '[Modx3ProfilerToolbar] PDO not available for wrapping');
+                return;
+            }
+
+            // Skip if already wrapped
+            if ($connection->pdo instanceof PDOProfiler) {
+                $this->modx->log(\modX::LOG_LEVEL_DEBUG, '[Modx3ProfilerToolbar] PDO already wrapped');
                 return;
             }
 
@@ -62,11 +70,13 @@ class SQLProfiler
             $this->interceptor = new PDOInterceptor($this->modx, $this);
             $this->pdoProfiler = new PDOProfiler($originalPdo, $this, $this->interceptor);
             
-            // Replace PDO in connection
+            // Replace PDO in connection (xPDO uses __get/__set, so this should work)
             $connection->pdo = $this->pdoProfiler;
             
             // Start profiling
             $this->pdoProfiler->startProfiling();
+            
+            $this->modx->log(\modX::LOG_LEVEL_INFO, '[Modx3ProfilerToolbar] PDO wrapped successfully');
             
         } catch (\Throwable $e) {
             // Fallback: PDO wrapping failed, rely on queryLog
