@@ -156,6 +156,12 @@ $_lang['setting_modx3profilertoolbar.slow_snippet_ms'] = 'Slow snippet threshold
 $_lang['setting_modx3profilertoolbar.slow_snippet_ms_desc'] = 'Snippets slower than this are flagged.';
 $_lang['setting_modx3profilertoolbar.cli_enabled'] = 'Profile CLI';
 $_lang['setting_modx3profilertoolbar.cli_enabled_desc'] = 'Profile CLI requests.';
+$_lang['setting_modx3profilertoolbar.cli_output'] = 'CLI Output';
+$_lang['setting_modx3profilertoolbar.cli_output_desc'] = 'Where to output profiling results in CLI: console (to stdout) or file (to a file).';
+$_lang['setting_modx3profilertoolbar.cli_output_file'] = 'CLI Output File';
+$_lang['setting_modx3profilertoolbar.cli_output_file_desc'] = 'Path to file for saving traces in CLI mode. Only used if cli_output = file.';
+$_lang['setting_modx3profilertoolbar.cli_output_format'] = 'CLI Output Format';
+$_lang['setting_modx3profilertoolbar.cli_output_format_desc'] = 'Output format for CLI profiling results: json, text, or csv.';
 $_lang['setting_modx3profilertoolbar.storage_path'] = 'Trace storage path';
 $_lang['setting_modx3profilertoolbar.storage_path_desc'] = 'Directory for raw trace files. Empty = core/cache/modx3profilertoolbar/traces/';
 

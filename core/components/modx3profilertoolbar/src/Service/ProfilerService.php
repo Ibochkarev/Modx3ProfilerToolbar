@@ -14,6 +14,12 @@ class ProfilerService
 
     /** @var bool */
     protected $enabled = false;
+    /** @var string */
+    protected $cliOutput = 'console';
+    /** @var string */
+    protected $cliOutputFile;
+    /** @var string */
+    protected $cliOutputFormat = 'json';
 
     /** @var int */
     protected $samplingRate = 100;
@@ -42,11 +48,14 @@ class ProfilerService
     /** @var array */
     protected $collectors = [];
 
-    public function __construct(\modX $modx)
+    public function __construct($modx)
     {
         $this->modx = $modx;
         $this->enabled = (bool) $modx->getOption('modx3profilertoolbar.enabled', null, false);
         $this->samplingRate = (int) $modx->getOption('modx3profilertoolbar.sampling_rate', null, 100);
+        $this->cliOutput = $modx->getOption('modx3profilertoolbar.cli_output', null, 'console');
+        $this->cliOutputFile = $modx->getOption('modx3profilertoolbar.cli_output_file', null, '');
+        $this->cliOutputFormat = $modx->getOption('modx3profilertoolbar.cli_output_format', null, 'json');
     }
 
     public function shouldProfile(): bool
@@ -165,10 +174,185 @@ class ProfilerService
         $traceData['advisor'] = $analysis['advisor'];
         $traceData['performance_score'] = $analysis['score'];
 
+        // CLI output
+        if (php_sapi_name() === 'cli') {
+            $this->outputCliTrace($traceData);
+            return;
+        }
+
+        // Web toolbar injection
         if ($this->modx->context->key === 'web') {
             $toolbarService = new ToolbarService($this->modx, $this);
             $toolbarService->inject($this->requestId, $traceData);
         }
+    }
+
+    /**
+     * Output profiling data when running in CLI mode.
+     */
+    protected function outputCliTrace(array $traceData): void
+    {
+        $output = '';
+        switch ($this->cliOutputFormat) {
+            case 'text':
+                $output = $this->formatTraceAsText($traceData);
+                break;
+            case 'csv':
+                $output = $this->formatTraceAsCsv($traceData);
+                break;
+            case 'json':
+            default:
+                $output = json_encode($traceData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                break;
+        }
+
+        if ($this->cliOutput === 'file' && !empty($this->cliOutputFile)) {
+            // Resolve to an absolute path inside MODX core_path for safety
+            $corePath = rtrim((string) $this->modx->getOption('core_path'), '/');
+            $filePath = $this->cliOutputFile;
+            // If path is not absolute, prefix core_path
+            if (!preg_match('#^[/\\]#', $filePath)) {
+                $filePath = $corePath . '/' . ltrim($filePath, '/');
+            }
+            // Normalize and prevent directory traversal
+            $realDir = realpath(dirname($filePath));
+            if ($realDir === false || strpos($realDir, $corePath) !== 0) {
+                // Fallback to core_path/logs if validation fails
+                $fallbackDir = $corePath . '/components/modx3profilertoolbar/logs';
+                @mkdir($fallbackDir, 0755, true);
+                $filePath = $fallbackDir . '/' . basename($filePath);
+            } else {
+                if (!is_dir($realDir)) {
+                    @mkdir($realDir, 0755, true);
+                }
+            }
+            file_put_contents($filePath, $output . PHP_EOL);
+        } else {
+            // default to console output
+            echo $output . PHP_EOL;
+        }
+    }
+
+    /**
+     * Helper to format trace data as plain text.
+     */
+    protected function formatTraceAsText(array $traceData): string
+    {
+        $lines = [];
+        $lines[] = '--- Modx3ProfilerToolbar CLI Trace ---';
+        $lines[] = 'Request ID: ' . ($traceData['request_id'] ?? $this->requestId);
+        $lines[] = 'Context: ' . ($traceData['context'] ?? 'unknown');
+        $lines[] = 'URL: ' . ($traceData['url'] ?? 'N/A');
+        $lines[] = 'Method: ' . ($traceData['method'] ?? 'N/A');
+        $lines[] = '';
+        
+        // Metrics
+        $metrics = $traceData['metrics'] ?? [];
+        $lines[] = 'Metrics:';
+        $lines[] = '  Total Time:    ' . round(($metrics['total_time'] ?? 0) * 1000, 2) . ' ms';
+        $lines[] = '  PHP Time:      ' . round(($metrics['php_time'] ?? 0) * 1000, 2) . ' ms';
+        $lines[] = '  SQL Time:      ' . round(($metrics['sql_time'] ?? 0) * 1000, 2) . ' ms';
+        $lines[] = '  Memory Peak:   ' . $this->formatBytes((int) ($metrics['memory_peak'] ?? 0));
+        $lines[] = '  SQL Count:     ' . ($traceData['sql_count'] ?? 0);
+        $lines[] = '  Snippet Count: ' . ($traceData['snippet_count'] ?? 0);
+        $lines[] = '  Chunk Count:   ' . ($traceData['chunk_count'] ?? 0);
+        $lines[] = '';
+        
+        // Performance score
+        if (isset($traceData['performance_score'])) {
+            $score = $traceData['performance_score'];
+            $status = $score >= 80 ? 'Excellent' : ($score >= 50 ? 'Fair' : 'Critical');
+            $lines[] = "Performance Score: $score / 100 ($status)";
+            $lines[] = '';
+        }
+        
+        // Advisor
+        if (!empty($traceData['advisor'])) {
+            $lines[] = 'Advisor:';
+            foreach ($traceData['advisor'] as $item) {
+                $lines[] = '  - ' . ($item['message'] ?? $item);
+            }
+            $lines[] = '';
+        }
+        
+        // Events
+        if (!empty($traceData['events'])) {
+            $lines[] = 'Events (' . count($traceData['events']) . '):';
+            foreach ($traceData['events'] as $event) {
+                $name = $event['name'] ?? 'unknown';
+                $duration = (float) ($event['duration'] ?? 0);
+                $type = isset($event['type']) ? '[' . $event['type'] . '] ' : '';
+                $cached = isset($event['cached']) && $event['cached'] ? ' [cached]' : '';
+                $lines[] = "  $type$name$cached: " . round($duration * 1000, 2) . ' ms';
+            }
+            $lines[] = '';
+        }
+        
+        // SQL
+        if (!empty($traceData['sql'])) {
+            $lines[] = 'SQL Queries (' . count($traceData['sql']) . '):';
+            foreach ($traceData['sql'] as $i => $q) {
+                $time = (float) ($q['time'] ?? 0);
+                $slow = $time * 1000 > (float) $this->modx->getOption('modx3profilertoolbar.slow_query_ms', null, 100) ? ' [slow]' : '';
+                $lines[] = '  #' . ($i + 1) . ' (' . ($time * 1000) . ' ms)' . $slow . ': ' . $q['query'];
+            }
+        }
+        
+        return implode(PHP_EOL, $lines);
+    }
+
+    /**
+     * Helper to format trace data as CSV.
+     */
+    protected function formatTraceAsCsv(array $traceData): string
+    {
+        $csv = "Name,Type,Duration(ms),Cached\n";
+        if (!empty($traceData['events'])) {
+            foreach ($traceData['events'] as $event) {
+                $name = $this->escapeCsvField($event['name'] ?? '');
+                $type = $event['type'] ?? 'event';
+                $duration = round((float) ($event['duration'] ?? 0) * 1000, 2);
+                $cached = $event['cached'] ?? '';
+                $csv .= "$name,$type,$duration,$cached\n";
+            }
+        }
+        if (!empty($traceData['sql'])) {
+            foreach ($traceData['sql'] as $q) {
+                $query = $this->escapeCsvField($q['query'] ?? '');
+                $time = round((float) ($q['time'] ?? 0) * 1000, 2);
+                $csv .= "$query,sql,$time,\n";
+            }
+        }
+        return $csv;
+    }
+
+    /**
+     * Escape a field for CSV output (RFC 4180).
+     */
+    protected function escapeCsvField(string $field): string
+    {
+        // Если поле содержит запятую, кавычку или перенос строки — экранируем
+        if (strpos($field, ',') !== false || strpos($field, '"') !== false || strpos($field, "\n") !== false) {
+            // Удваиваем кавычки
+            $field = str_replace('"', '""', $field);
+            // Оборачиваем в кавычки
+            return '"' . $field . '"';
+        }
+        return $field;
+    }
+
+    /**
+     * Helper to format bytes to human readable.
+     */
+    protected function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $i = 0;
+        while ($bytes >= 1024 && $i < count($units) - 1) {
+            $bytes /= 1024;
+            $i++;
+        }
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 
     /**
