@@ -39,6 +39,16 @@ class RuleEngine
         foreach ($this->rules as $rule) {
             $result = $rule->evaluate($traceData);
             if ($result !== null) {
+                // Translate message and suggestion using lexicon
+                if (isset($result['message'])) {
+                    $msgKey = $result['message'];
+                    $msgParams = $result['message_params'] ?? [];
+                    $result['message'] = $this->modx->lexicon($msgKey, $msgParams);
+                }
+                if (isset($result['suggestion'])) {
+                    $sugKey = $result['suggestion'];
+                    $result['suggestion'] = $this->modx->lexicon($sugKey);
+                }
                 $recommendations[] = $result;
             }
         }
