@@ -577,6 +577,11 @@ class ProfilerService
     {
         $currentParser = $this->modx->parser;
 
+        // Если парсер ещё не инициализирован — ничего не делаем (будет подменён позже)
+        if ($currentParser === null) {
+            return;
+        }
+
         // Если уже обёрнут — пропускаем
         if ($currentParser instanceof \Modx3ProfilerToolbar\Parser\Modx3ProfilerToolbarParser) {
             return;
