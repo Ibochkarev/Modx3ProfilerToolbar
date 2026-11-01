@@ -390,7 +390,7 @@ class ProfilerService
     protected function collectCoreToolsTags(float $endTime): void
     {
         if (!$this->modx->services->has('pdotools')) {
-            $this->modx->log(\modX::LOG_LEVEL_ERROR, '[Modx3ProfilerToolbar] pdoTools service not found');
+            // pdoTools is optional; no need to log ERROR on every request
             return;
         }
         try {
@@ -438,7 +438,6 @@ class ProfilerService
     protected function parsePdoToolsTimings(array $timings): void
     {
         foreach ($timings as $entry) {
-            $time = (float) ($entry['time'] ?? 0);
             $message = $entry['message'] ?? '';
 
             // Загрузка сниппета (считаем как выполнение)
@@ -448,7 +447,7 @@ class ProfilerService
                 $this->trackTag('{$_modx->runSnippet("' . $snippetName . '")}', [
                     'type' => 'snippet',
                     'cached' => false,
-                    'parse_time' => $time,
+                    'parse_time' => 0.0, // pdoTools time is delta, not actual execution; set to 0 to avoid false slow detection
                     'queries' => 0,
                     'query_time' => 0.0,
                     'attempts' => 1,
