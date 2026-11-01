@@ -45,9 +45,6 @@ class ProfilerService
     /** @var array Component traces grouped by hash (from SnippetProcessWrapper / ChunkProcessWrapper) */
     protected $componentTraces = [];
 
-    /** @var bool Flag to avoid spamming logs when pdoTools service is missing */
-    protected $pdoToolsMissingLogged = false;
-
     /** @var array Temporary storage for snippet/chunk start times */
     public $_snippetStarts = [];
 
@@ -393,10 +390,7 @@ class ProfilerService
     protected function collectCoreToolsTags(float $endTime): void
     {
         if (!$this->modx->services->has('pdotools')) {
-            if (!$this->pdoToolsMissingLogged) {
-                $this->modx->log(\modX::LOG_LEVEL_ERROR, '[Modx3ProfilerToolbar] pdoTools service not found');
-                $this->pdoToolsMissingLogged = true;
-            }
+            // pdoTools is optional; no need to log ERROR on every request
             return;
         }
         try {
