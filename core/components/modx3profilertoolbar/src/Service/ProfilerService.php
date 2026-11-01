@@ -438,7 +438,6 @@ class ProfilerService
     protected function parsePdoToolsTimings(array $timings): void
     {
         foreach ($timings as $entry) {
-            $time = (float) ($entry['time'] ?? 0);
             $message = $entry['message'] ?? '';
 
             // Загрузка сниппета (считаем как выполнение)
