@@ -36,15 +36,17 @@ switch ($eventName) {
             $profiler = new \Modx3ProfilerToolbar\Service\ProfilerService($modx);
             $modx->modx3profilertoolbar = $profiler;
             $profiler->start();
-            
-            // Подмена парсера для профилирования обычных MODX-сниппетов
-            // (для pdoTools не работает из-за конфликта с Fenom)
-            $profiler->replaceParser();
         }
         break;
 
     case 'OnHandleRequest':
         if (!empty($modx->modx3profilertoolbar)) {
+            // Подмена парсера только если профайлер действительно запущен (requestId установлен)
+            // и парсер уже создан (к моменту OnHandleRequest он гарантированно существует)
+            if ($modx->modx3profilertoolbar->getRequestId()) {
+                $modx->modx3profilertoolbar->replaceParser();
+            }
+            
             $modx->modx3profilertoolbar->trackEvent('OnHandleRequest', 'start');
             // Close the OnMODXInit event here to get a proper duration
             $modx->modx3profilertoolbar->trackEvent('OnMODXInit', 'end');
